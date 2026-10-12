@@ -10,6 +10,8 @@ Scam With Your Friends Web is an **open-source, unofficial browser remake** insp
 
 > **Is "Scam With Your Friends" out yet? Release date & playtest:** the official game is by its original developers and is published on [Steam](https://store.steampowered.com/app/4954910/Scam_With_Your_Friends/) — check the store page for the current release date, Early Access and playtest status, as dates may change. This repo is a **free, unofficial fan-made browser version** you can [play right now](https://scam.gamefun.world) while you wait. Questions? See the [FAQ](https://github.com/mrzh7/scam-with-your-friends-web/discussions).
 
+**Latest update (2026-10-13):** expanded campaign and co-op features (also in no-account mode); Rainbit slot machine fixes with saved results and new staggered reel animations.
+
 ### Online co-op call center party game · job simulator · dark comedy, in your browser
 
 **Answer fictional AI callers, talk with your team over voice, manage your time, hit the daily quota and survive the performance review.**
