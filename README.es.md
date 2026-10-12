@@ -8,6 +8,8 @@
 
 Scam With Your Friends Web es una **recreación no oficial y de código abierto para navegador**, inspirada en Scam With Your Friends. Juega en equipo en una oficina 3D, habla con personajes de IA ficticios y cumple las cuotas diarias. Está hecho con React, Three.js y Cloudflare Workers y permite ejecutarlo localmente o alojarlo por tu cuenta.
 
+**Última actualización (2026-10-13):** campaña y cooperativo ampliados (también sin cuenta); correcciones en la tragamonedas Rainbit, resultados guardados y nuevas animaciones de rodillos.
+
 ### Juego de fiesta cooperativo en línea de centro de llamadas · simulador de trabajo · comedia negra, en tu navegador
 
 **Contesta llamantes de IA ficticios, habla por voz con tu equipo, gestiona tu tiempo, cumple la cuota diaria y sobrevive a la evaluación de desempeño.**
