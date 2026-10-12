@@ -1,0 +1,8 @@
+.slot-machine .rainbit-reel{position:relative;width:88px;height:96px;overflow:hidden;border:2px solid #82749e;border-radius:6px;background:linear-gradient(#cdc9bd,#fff8e2 48%,#c1bda9);color:#665084;box-shadow:inset 0 8px 13px #37264938,inset 0 -8px 13px #37264938}
+.rainbit-reel:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(#39285045,transparent 30%,transparent 70%,#39285045)}
+.rainbit-strip{display:flex;flex-direction:column;will-change:transform}
+.rainbit-strip>span{height:92px;min-height:92px;display:flex;align-items:center;justify-content:center;font:700 48px/1 system-ui,sans-serif;text-shadow:0 2px #fff9}
+.rainbit-reel.rolling .rainbit-strip{animation:rainbit-roll linear infinite;filter:blur(.5px)}
+.rainbit-reel.settled{border-color:#c7ab70}
+@keyframes rainbit-roll{from{transform:translateY(0)}to{transform:translateY(-552px)}}
+@media(prefers-reduced-motion:reduce){.rainbit-reel.rolling .rainbit-strip{animation-timing-function:steps(6);filter:none}}
