@@ -1363,5 +1363,11 @@
   "库存有 {0} 张，已使用 12 张。还有多少张可用？": "Existencias: {0} cupones, 12 usados. ¿Cuántos quedan?",
   "共 {0} 箱，三个站点均分。每站分配多少箱？": "Reparte {0} cajas entre tres estaciones. ¿Cuántas por estación?",
   "往返 {0} 天，每天 3 包补给，额外备 2 包。总共几包？": "Viaje de {0} días, 3 paquetes al día y 2 extras. ¿Total?",
-  "Documents/{0}": "Documents/{0}"
+  "Documents/{0}": "Documents/{0}",
+  "房间连接已断开，请先重新连接。": "Sala desconectada. Vuelve a conectarte.",
+  "上班后才能使用 Rainbit。": "Inicia el turno para usar Rainbit.",
+  "游戏币不足，请降低投入或先完成业务。": "No tienes monedas suficientes. Reduce la apuesta o completa una tarea.",
+  "Rainbit：本轮返还 ${0}，净赚 ${1}。": "Rainbit: retorno de ${0}, beneficio neto de ${1}.",
+  "Rainbit：本轮损失 ${0}。": "Rainbit: perdiste ${0} en esta ronda.",
+  "转轮结果": "Resultado de los rodillos"
 }

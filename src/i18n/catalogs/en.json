@@ -1363,5 +1363,11 @@
   "库存有 {0} 张，已使用 12 张。还有多少张可用？": "Stock: {0} vouchers, 12 used. How many remain?",
   "共 {0} 箱，三个站点均分。每站分配多少箱？": "Split {0} crates equally among three stations. Crates per station?",
   "往返 {0} 天，每天 3 包补给，额外备 2 包。总共几包？": "A {0}-day round trip needs 3 packs daily plus 2 spares. Total packs?",
-  "Documents/{0}": "Documents/{0}"
+  "Documents/{0}": "Documents/{0}",
+  "房间连接已断开，请先重新连接。": "Room disconnected. Reconnect first.",
+  "上班后才能使用 Rainbit。": "Start your shift to use Rainbit.",
+  "游戏币不足，请降低投入或先完成业务。": "Not enough coins. Lower your bet or complete a task.",
+  "Rainbit：本轮返还 ${0}，净赚 ${1}。": "Rainbit: returned ${0}, net profit ${1}.",
+  "Rainbit：本轮损失 ${0}。": "Rainbit: lost ${0} this round.",
+  "转轮结果": "Reel result"
 }
