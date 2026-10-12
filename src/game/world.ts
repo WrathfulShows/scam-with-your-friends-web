@@ -1,11 +1,12 @@
+import {makeRagdoll,stepRagdoll,type Ragdoll} from './ragdoll';
 import { gameReducer, type GameState } from './engine';
 
 export type Locomotion = 'standing' | 'seated';
 export interface Input { forward: number; side: number; yaw: number; pitch: number; sprint: boolean; jump: boolean; seq: number }
-export interface Actor { completedCalls?: number; celebrateUntil?: number; phoneTalking?: number; phoneTalkingUntil?: number; onCall?: boolean; speechUntil?: number; speechRevision?: number; speechCall?: number; waveUntil?: number; id: string; name: string; seat: number; x: number; y: number; z: number; yaw: number; pitch: number; vy: number; mode: Locomotion; moving: number; stamina: number; stun: number; held: string | null; talking: number; input: Input; inputAt: number }
-export interface Body { id: string; kind: 'ball' | 'box' | 'mug' | 'parcel'; x: number; y: number; z: number; vx: number; vy: number; vz: number; rotation: number; radius: number; heldBy: string | null; owner?: string; order?: number; item?: string }
+export interface Actor { ragdoll?:Ragdoll; completedCalls?: number; celebrateUntil?: number; phoneTalking?: number; phoneTalkingUntil?: number; onCall?: boolean; speechUntil?: number; speechRevision?: number; speechCall?: number; waveUntil?: number; id: string; name: string; seat: number; x: number; y: number; z: number; yaw: number; pitch: number; vy: number; mode: Locomotion; moving: number; stamina: number; stun: number; held: string | null; talking: number; input: Input; inputAt: number }
+export interface Body { id: string; kind: 'ball' | 'box' | 'mug' | 'parcel' | 'photo'; texture?:string; x: number; y: number; z: number; vx: number; vy: number; vz: number; rotation: number; radius: number; heldBy: string | null; owner?: string; order?: number; item?: string }
 export interface World { version: 1; time: number; actors: Record<string, Actor>; bodies: Body[]; serial: number; burst: { x: number; z: number; until: number } | null }
-export type WorldCommand = { type: 'sit' | 'stand' | 'interact' | 'drop' | 'throw' | 'wave' } | { type: 'use'; item: string };
+export type WorldCommand = {type:'print';image:string} | { type: 'sit' | 'stand' | 'interact' | 'drop' | 'throw' | 'wave' } | { type: 'use'; item: string };
 export const SEATS = [{ x: -4.8, z: 4.25 }, { x: -1.8, z: 4.25 }, { x: 3.3, z: 4.25 }, { x: 6.3, z: 4.25 }];
 export const STATIONS = { delivery: { x: 7.9, z: 7.3 }, power: { x: 18.8, z: -5.4 }, coffee: { x: 15, z: -5.4 }, fire: { x: 12.2, z: -4.5 }, meeting: { x: 15.5, z: 4.7 } };
 export const EMPTY_INPUT: Input = { forward: 0, side: 0, yaw: Math.PI, pitch: 0, sprint: false, jump: false, seq: 0 };
@@ -26,6 +27,7 @@ export function sanitizeInput(value: unknown, previous: Input): Input | null { i
 export function setInput(world: World, id: string, value: unknown) { const p = world.actors[id]; if (!p) return false; const input = sanitizeInput(value, p.input); if (!input) return false; p.input = input; p.inputAt = world.time; p.yaw = input.yaw; p.pitch = input.pitch; return true; }
 export function stepActor(world: World, p: Actor, dt: number) {
  p.stun = Math.max(0, p.stun - dt); const input = p.input; p.yaw = input.yaw; p.pitch = input.pitch;
+ if(p.stun>0&&p.mode==='standing'){p.ragdoll||=makeRagdoll();stepRagdoll(p.ragdoll,dt);}else p.ragdoll=undefined;
  if (p.mode === 'seated') { p.moving = 0; return; }
  const live = world.time - p.inputAt < .4 && !p.stun;
  const f = live ? input.forward : 0, side = live ? input.side : 0, norm = Math.max(1, Math.hypot(f, side));
@@ -70,7 +72,12 @@ export function syncDeliveries(world: World, id: string, game: GameState) {
 export function nearestBody(world: World, actor: Actor) { return world.bodies.filter(b => !b.heldBy && (b.kind !== 'parcel' || b.owner === actor.id) && distance(actor, b) < 1.65).sort((a, b) => distance(actor, a) - distance(actor, b))[0]; }
 export function interactWorld(world: World, id: string, command: WorldCommand, game: GameState): { game: GameState; message: string } {
  const p = world.actors[id]; if (!p) return { game, message: '办公室尚未就绪。' }; const seat = SEATS[p.seat]; let next = game; let message = '';
- if (command.type === 'stand') { if (p.mode === 'seated') { p.mode = 'standing'; p.x = seat.x; p.z = seat.z + .9; p.y = 0; } }
+ if(command.type==='print'){
+  if(typeof command.image!=='string'||command.image.length>12000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(command.image))return {game,message:'照片格式无效。'};
+  if(world.bodies.length>=40||world.bodies.filter(b=>b.kind==='photo').length>=8)return {game,message:'办公室最多保留八张打印照片。'};
+  world.bodies.push({id:'photo-'+(++world.serial),kind:'photo',texture:command.image,x:p.x,z:p.z+.7,y:1.2,vx:0,vy:0,vz:0,radius:.2,rotation:0,heldBy:null});message='照片已打印到身边，可以拾取和传给队友。';
+ }
+ else if (command.type === 'stand') { if (p.mode === 'seated') { p.mode = 'standing'; p.x = seat.x; p.z = seat.z + .9; p.y = 0; } }
  else if (command.type === 'sit') { if (distance(p, seat) > 1.8 || p.stun) message = '请走到黄色标记的个人工位旁，再按 E 入座。'; else if (p.held) message = '先按 Q 放下手中的物品。'; else { p.mode = 'seated'; p.x = seat.x; p.z = seat.z; p.yaw = Math.PI; p.input = { ...EMPTY_INPUT, seq: p.input.seq, yaw: Math.PI }; } }
  else if (command.type === 'interact') {
   const b = nearestBody(world, p);

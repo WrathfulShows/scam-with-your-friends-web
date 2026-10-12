@@ -19,3 +19,5 @@ it('consumes the browser bootstrap JSON body before returning its session',async
  expect((await app.fetch(request,env,{} as ExecutionContext)).status).toBe(200);
  expect(request.bodyUsed).toBe(true);
 });
+
+it('supports expansion saves and public lobbies for anonymous players',async()=>{const a=await guest();const save=await(await call('save','GET',a.cookie)).json() as any;expect(save.state.campaign.edition).toBe(3);const response=await call('lobbies','GET',a.cookie);expect(response.status).toBe(200);expect(await response.json()).toEqual({rooms:[]});});

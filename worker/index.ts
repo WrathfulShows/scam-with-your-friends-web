@@ -1,3 +1,4 @@
+import {cloneKey,createClone,removeClone} from './voices';
 import {emailVerified,requestVerification,verifyEmail} from './email';
 import {normalizeLocale} from '../src/i18n/locales';
 import {adminSettings,isAdministrator,runtimeEnv,reservedAdminEmail} from './admin';
@@ -21,10 +22,10 @@ export default {
   // browser-bound cookie are checked in finishOAuth instead of this origin gate.
   if (!oauthCallback && request.headers.get('Origin') && request.headers.get('Origin') !== url.origin) return json({ error: '不允许跨站请求' }, 403);
   if (!oauthCallback && request.headers.get('Sec-Fetch-Site') === 'cross-site') return json({ error: '不允许跨站请求' }, 403);
-  if (Number(request.headers.get('Content-Length')) > 100000) return json({ error: '请求过大' }, 413);
+  if (Number(request.headers.get('Content-Length')) > (path==='/api/voices'?8*1024*1024:100000)) return json({ error: '请求过大' }, 413);
   try {
    if (path === '/api/admin/settings') return adminSettings(request,env);
-   if (path === '/api/config' || path === '/api/dialogue' || path === '/api/speech' || path === '/api/ai/test') env = await runtimeEnv(env);
+   if (path === '/api/config' || path === '/api/dialogue' || path === '/api/speech' || path === '/api/ai/test' || path === '/api/voices') env = await runtimeEnv(env);
    const withAccounts = accountsEnabled(env);
    if (path === '/api/session/anonymous' && request.method === 'POST') {
     // Consume the small JSON body before responding so local keep-alive connections remain reusable.
@@ -36,7 +37,7 @@ export default {
    if (path === '/api/auth/providers' && request.method === 'GET') return json(withAccounts ? providerConfiguration(env) : {google:false,wechat:false});
    const oauthStart = path.match(/^\/api\/auth\/(google|wechat)\/start$/);
    if (oauthStart && request.method === 'POST') { const data = await body(request); return startOAuth(request, env, oauthStart[1] as Provider, data.link === true); }
-   if (path === '/api/health') return json({ ok: true, runtime: 'cloudflare-workers', version: '0.2.0' });
+   if (path === '/api/health') return json({ ok: true, runtime: 'cloudflare-workers', version: '0.3.0' });
    if (path === '/api/config' && request.method === 'GET') return json({ accountsEnabled: withAccounts, ai: aiConfigured(env), model: null, missing: [], speech: {provider:speechConfiguration(env).provider, available:speechConfiguration(env).available}, relay: !!(env.TURN_KEY_ID && env.TURN_API_TOKEN) });
    if (path === '/api/ai/test' && request.method === 'POST') {
     const user = await currentUser(request, env); if (!user) return json({ error: '请先登录。' }, 401); if (!await isAdministrator(request,env)) return json({error:'Administrator access required.'},403);
@@ -93,11 +94,25 @@ export default {
    }
    if (path === '/api/speech' && request.method === 'POST') {
     if (!user) return json({error:'请先建立游戏会话。'},401);
+    const data = await body(request);
+    if(data.voiceId){
+     if(typeof data.voiceId!=='string'||!/^[\w-]{1,150}$/.test(data.voiceId))return json({error:'音色编号无效。'},400);
+     let allowed=!!await env.DB.prepare('SELECT id FROM custom_voices WHERE id=? AND user_id=?').bind(data.voiceId,user.id).first();
+     if(!allowed&&typeof data.roomCode==='string'&&/^[A-Z2-9]{6}$/.test(data.roomCode)){const stub=env.ROOMS.get(env.ROOMS.idFromName(data.roomCode));const check=await stub.fetch(new Request('https://room/voice-authorize',{method:'POST',body:JSON.stringify({id:user.id,voiceId:data.voiceId})}));allowed=check.ok;}
+     const registered=await env.DB.prepare('SELECT id FROM custom_voices WHERE id=?').bind(data.voiceId).first();
+     if(!allowed||!registered||!cloneKey(env))return json({error:'此自定义音色不可用，请使用默认声音。'},403);
+     env={...env,TTS_PROVIDER:'elevenlabs',TTS_API_KEY:cloneKey(env),TTS_MODEL:'eleven_flash_v2_5',TTS_VOICES:'[]',TTS_VOICE:data.voiceId};
+    }
     if (!speechConfiguration(env).available) return json({error:'语音：尚未配置云端 TTS。'},503);
     if (!await rateLimit(request,env,`speech-${user.id}`,90)) return json({error:'语音合成过于频繁，请稍后重试。'},429);
-    const data = await body(request);
     if (typeof data.text !== 'string' || data.text.length > 1200 || !data.text.trim() || !Number.isInteger(data.person) || data.person < 0 || data.person > 7) return json({error:'语音文本或角色无效。'},400);
     try { return await synthesizeSpeech(env,{text:data.text,person:data.person,speed:data.speed,locale:normalizeLocale(data.locale)},request.signal); } catch (e) { return json({error:e instanceof Error ? e.message : '语音暂不可用。'},502); }
+   }
+   if(path==='/api/voices'){
+    if(!user)return json({error:'请先登录。'},401);
+    if(request.method==='GET'){const rows=await env.DB.prepare('SELECT id,name FROM custom_voices WHERE user_id=? ORDER BY created_at DESC').bind(user.id).all();return json({available:!!cloneKey(env),voices:rows.results});}
+    if(!await rateLimit(request,env,'clone-'+user.id,3))return json({error:'音色操作过于频繁，请稍后再试。'},429);
+    try{if(request.method==='POST')return json(await createClone(env,user.id,request));if(request.method==='DELETE')return json(await removeClone(env,user.id,url.searchParams.get('id')||''));}catch(e){return json({error:e instanceof Error?e.message:'声音服务不可用。'},400);}
    }
    if (path === '/api/voice/ice' && request.method === 'GET') {
     if (!user) return json({ error: '请先加入办公室。' }, 401);
@@ -108,12 +123,15 @@ export default {
     if (request.method === 'GET') return json(await readSave(env, user.id));
     if (request.method === 'PUT') { const result = await writeSave(env, user, await body(request)); return json(result.body, result.status); }
    }
+   if (path === '/api/lobbies' && request.method === 'GET') {
+    const rows=await env.DB.prepare("SELECT code,name,players,day,phase FROM public_lobbies WHERE updated_at>? AND players<4 AND phase IN ('ready','playing','review') ORDER BY updated_at DESC LIMIT 30").bind(Date.now()-45000).all();return json({rooms:rows.results});
+   }
    if (path === '/api/rooms' && request.method === 'POST') {
     if (!await rateLimit(request, env, 'room', 20)) return json({ error: '创建房间过于频繁。' }, 429);
     const data = await body(request); const name = String(data.name || user.name).trim().slice(0, 24) || user.name;
     const joining = typeof data.code === 'string' && data.code.length > 0; const code = joining ? data.code.toUpperCase() : Array.from(crypto.getRandomValues(new Uint8Array(6)), n => 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[n % 32]).join('');
     if (!/^[A-Z2-9]{6}$/.test(code)) return json({ error: '请输入六位房间码。' }, 400);
-    const stub = env.ROOMS.get(env.ROOMS.idFromName(code)); const response = await stub.fetch(new Request(`https://room/${joining ? 'join' : 'create'}`, { method: 'POST', body: JSON.stringify({ id: user.id, name, code }) }));
+    const stub = env.ROOMS.get(env.ROOMS.idFromName(code)); const response = await stub.fetch(new Request(`https://room/${joining ? 'join' : 'create'}`, { method: 'POST', body: JSON.stringify({ id: user.id, name, code, public:data.public===true }) }));
     const payload = await response.json(); return json(payload, response.status);
    }
    const match = path.match(/^\/api\/rooms\/([A-Z2-9]{6})\/socket$/);

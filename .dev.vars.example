@@ -26,6 +26,9 @@ TURN_API_TOKEN=
 # TTS_VOICES='["","","","","","","",""]'
 # ElevenLabs alternative: TTS_PROVIDER=elevenlabs, TTS_MODEL=eleven_flash_v2_5
 # TTS_VOICE=<voice ID from your ElevenLabs voice library>
+# Optional voice cloning, independent of the main caller TTS provider.
+# ELEVENLABS_API_KEY=
+# Requires a provider plan supporting Instant Voice Cloning. Never use a VITE_ prefix.
 
 # Google OpenID Connect / WeChat Open Platform website QR login.
 # Server only. Configure approved apps and callback URLs; see docs/AUTH.md.

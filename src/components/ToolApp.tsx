@@ -1,3 +1,4 @@
+import { CampaignTool } from './CampaignApps';
 import {t} from '../i18n';
 import { useState } from 'react';
 import { SCHEMES, type Scheme } from '../game/content';
@@ -5,6 +6,7 @@ import type { Action, GameState } from '../game/engine';
 import { Icon } from './Icon';
 export function ToolApp({ id, game, dispatch }: { id: Scheme; game: GameState; dispatch: (a: Action) => void }) {
  const [code, setCode] = useState(''); const [connected, setConnected] = useState(false); const [file, setFile] = useState(''); const [error, setError] = useState(''); const scheme = SCHEMES[id]; const c = game.call; const available = c?.scheme === id && c.status !== 'ringing'; const done = available && c.status === 'complete';
+ if(game.campaign)return <CampaignTool id={id} game={game} dispatch={dispatch}/>;
  if (id === 'credit') return <CreditApp game={game} dispatch={dispatch}/>;
  const submit = () => { if (!available) { setError('请先接听对应业务的来电。'); return; } if (id === 'remote' && !connected) { if (c.revealed && code.trim().toUpperCase() === c.code) { setConnected(true); setError(''); } else setError('连接编号不匹配，请检查通话记录。'); return; } if (id === 'remote' && !file) { setError('请选中任务文件。'); return; } dispatch({ type: 'verify', code, file }); };
  return <div className={`tool-app ${id}`}><header className="tool-heading"><span><Icon name={id} size={30}/></span><div><h2>{t(id === 'identity' ? 'Social Security Stealer' : scheme.title)}</h2><p>{t(id === 'identity' ? '模拟身份档案验证终端' : scheme.name)}</p></div><b>{t("KOS")}<br/>{t("APP")}</b></header>

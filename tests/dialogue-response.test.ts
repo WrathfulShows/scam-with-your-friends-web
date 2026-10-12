@@ -10,6 +10,7 @@ const env = { AI_API_KEY: 'test-only', AI_MODEL: 'deepseek-flash', AI_BASE_URL: 
 function active() { let state = gameReducer(newGame(123), { type: 'start' }); for (let i = 0; i < 3; i++) state = gameReducer(state, { type: 'tick' }); return gameReducer(state, { type: 'accept' }); }
 
 describe('Provider reply parsing', () => {
+ it('validates optional semantic intent without trusting arbitrary classification fields',()=>{expect(parseDialogueResponse(payload(JSON.stringify({reply:'I am worried.',attitude:'positive',intent:'listen',contradiction:false})))).toEqual({reply:'I am worried.',attitude:'positive',intent:'listen',contradiction:false});expect(()=>parseDialogueResponse(payload(JSON.stringify({reply:'Hi',attitude:'positive',intent:'win',contradiction:false})))).toThrow();expect(()=>parseDialogueResponse(payload(JSON.stringify({reply:'Hi',attitude:'positive',intent:'listen',contradiction:'false'})))).toThrow();});
  it.each([valid, '\uFEFF' + valid, '```json\n' + valid + '\n```', [{ type: 'text', text: valid }]])('accepts complete JSON with supported text wrappers', content => {
   expect(parseDialogueResponse(payload(content))).toEqual({ reply: '我们先核对游戏任务。', attitude: 'positive' });
  });

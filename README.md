@@ -50,6 +50,8 @@ Scam With Your Friends Web is an **open-source, unofficial browser remake** insp
 
 </div>
 
+> **Expansion update:** New campaigns include eight investigation workflows, contextual dialogue, random incidents, public lobbies, call transfers, team assistance, custom characters, recording/replays and office presentation updates. **Voice cloning and team voice buttons are temporarily disabled**; default caller TTS and Studio recording remain available. Existing saves keep classic rules. See [expansion notes](docs/EXPANSION.md) for migration and self-hosting details.
+
 ## Inspired by the official game
 
 **Official store:** [Scam With Your Friends on Steam](https://store.steampowered.com/app/4954910/Scam_With_Your_Friends/)

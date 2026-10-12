@@ -1,5 +1,5 @@
 import type { DialogueResult } from '../src/game/engine';
-type Reply = Pick<DialogueResult, 'reply' | 'attitude'>;
+type Reply = Pick<DialogueResult, 'reply' | 'attitude' | 'intent' | 'contradiction'>;
 export class DialogueResponseError extends Error {
  constructor(public kind: 'language' | 'empty' | 'truncated' | 'format' | 'invalid' | 'role' | 'identifier' | 'refused' | 'upstream', message: string, public retryable = true) { super(message); this.name = 'DialogueResponseError'; }
 }
@@ -22,5 +22,7 @@ export function parseDialogueResponse(payload: unknown): Reply {
  try { parsed = JSON.parse(fenced ? fenced[1] : text); } catch { throw new DialogueResponseError('format', 'AI 返回格式不正确。'); }
  const result = object(parsed);
  if (!result || typeof result.reply !== 'string' || !result.reply.trim() || result.reply.length > 360 || typeof result.attitude !== 'string' || !['positive', 'neutral', 'negative'].includes(result.attitude)) throw new DialogueResponseError('invalid', 'AI 返回内容未通过验证。');
- return { reply: result.reply.trim(), attitude: result.attitude as Reply['attitude'] };
+ if(result.intent!==undefined&&!['listen','explain','confirm','none'].includes(String(result.intent)))throw new DialogueResponseError('invalid','AI 返回内容未通过验证。');
+ if(result.contradiction!==undefined&&typeof result.contradiction!=='boolean')throw new DialogueResponseError('invalid','AI 返回内容未通过验证。');
+ return {reply:result.reply.trim(),attitude:result.attitude as Reply['attitude'],...(result.intent!==undefined?{intent:result.intent as Reply['intent']} : {}),...(result.contradiction!==undefined?{contradiction:result.contradiction as boolean}:{})};
 }

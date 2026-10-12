@@ -30,7 +30,7 @@ export async function generateDialogue(env: Env, call: Call, text: string, fetch
   // Spoken history has no JSON envelope. Supply explicitly named speakers as
   // context data for every provider, never as examples of the output format.
   messages: [{ role: 'system', content: callerPrompt(call,locale) + "\n" + languageInstruction(locale) }, { role: 'user', content: callerContext(call, text) }],
-  response_format: deepSeek ? { type: 'json_object' } : { type: 'json_schema', json_schema: { name: 'caller_response', strict: true, schema: { type: 'object', properties: { reply: { type: 'string' }, attitude: { type: 'string', enum: ['positive', 'neutral', 'negative'] } }, required: ['reply', 'attitude'], additionalProperties: false } } },
+  response_format: deepSeek ? { type: 'json_object' } : { type: 'json_schema', json_schema: { name: 'caller_response', strict: true, schema: { type: 'object', properties: { reply: { type: 'string' }, attitude: { type: 'string', enum: ['positive', 'neutral', 'negative'] }, ...(call.caseFile?{intent:{type:'string',enum:['listen','explain','confirm','none']},contradiction:{type:'boolean'}}:{}) }, required: call.caseFile?['reply','attitude','intent','contradiction']:['reply', 'attitude'], additionalProperties: false } } },
  };
  const signal = AbortSignal.timeout(22000);
  let previousKind: DialogueResponseError['kind'] | undefined;
@@ -55,6 +55,7 @@ export async function generateDialogue(env: Env, call: Call, text: string, fetch
    let payload: unknown;
    try { payload = await response.json(); } catch { throw new DialogueResponseError('upstream', signal.aborted ? 'AI 响应超时，请重试本条应答。' : 'AI 服务返回了无法识别的响应。', false); }
    const result = parseDialogueResponse(payload);
+   if (call.caseFile && (result.intent === undefined || result.contradiction === undefined)) throw new DialogueResponseError('invalid', 'AI 返回内容未通过验证。');
    if (['en','pt','es'].includes(locale) && /[\u3400-\u9fff]/.test(result.reply)) throw new DialogueResponseError('language','AI replied in the wrong language. Please retry.');
    validateCallerRole(call, text, result.reply);
    validateCallerIdentifiers(call, result.reply);

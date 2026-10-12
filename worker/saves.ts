@@ -1,5 +1,5 @@
 import {locales,type LanguagePreference} from '../src/i18n/locales';
-import { newGame, parseSave } from '../src/game/engine';
+import { newCampaign as newGame, parseSave } from '../src/game/engine';
 import type { Env, UserRow } from './auth';
 export function parseSettings(value: unknown) {
  if (value === undefined) return undefined;

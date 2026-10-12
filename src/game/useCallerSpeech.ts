@@ -12,7 +12,7 @@ export function chooseSystemVoice(voices: SpeechSynthesisVoice[], person: number
  const score=(v:SpeechSynthesisVoice)=> (/(Natural|Neural|Online)/i.test(v.name)?10:0)+(/CN|Hans/i.test(v.lang)?3:0)+Number(female ? /Xiao|Huihui|Yaoyao|female/i.test(v.name) : /Yun|Kangkang|(?:^|[^a-z])male\b/i.test(v.name)) * 4;
  return chinese.sort((a,b)=>score(b)-score(a))[0];
 }
-export function useCallerSpeech(call: Call|null, sound: boolean, paused: boolean) {
+export function useCallerSpeech(call: Call|null, sound: boolean, paused: boolean, roomCode?:string) {
  const locale=useLocale();
  const [config,setConfig]=useState<SpeechConfig|null>(null), [level,setLevel]=useState(0), [error,setError]=useState(''), [loading,setLoading]=useState(false), [repeat,setRepeat]=useState(0), [speed,setSpeed]=useState(speechSpeed);
  const abort=useRef<AbortController|null>(null), lastPlayed=useRef('');
@@ -49,7 +49,7 @@ export function useCallerSpeech(call: Call|null, sound: boolean, paused: boolean
    const watchdog=setTimeout(()=>{if(!disposed && !started){cleanup();setLoading(false);setError('系统语音未启动，请点击“播放语音”重试。');}},4000);
    signal.addEventListener('abort',()=>clearTimeout(watchdog),{once:true});
   };
-  if (config.available) {
+  if (config.available || call.caseFile?.persona?.voiceId) {
    setLoading(true);
    void (async()=>{
     try {
@@ -57,7 +57,7 @@ export function useCallerSpeech(call: Call|null, sound: boolean, paused: boolean
      const requestSignal=AbortSignal.any([signal,AbortSignal.timeout(30000)]);
      const session=await fetch('/api/session',{method:'POST',signal:requestSignal}); if(!session.ok)throw new Error('语音会话建立失败。');
      requestSignal.throwIfAborted();
-     const response=await fetch('/api/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t(line.text),person:call.person,speed,locale}),signal:requestSignal});
+     const response=await fetch('/api/speech',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({voiceId:call.caseFile?.persona?.voiceId,roomCode,text:t(line.text),person:call.person,speed,locale}),signal:requestSignal});
      if(!response.ok){const data=await response.json() as {error?:string};throw new Error(data.error||'语音服务暂不可用。');}
      if(disposed || requestSignal.aborted){await response.body?.cancel();return;}
      setLoading(false);await playPcmStream(response,requestSignal,update);
@@ -65,6 +65,6 @@ export function useCallerSpeech(call: Call|null, sound: boolean, paused: boolean
    })();
   } else native();
   return()=>{disposed=true;controller.abort();};
- },[key,call?.status,sound,paused,config,repeat,speed,stop,locale]);
+ },[key,call?.status,sound,paused,config,repeat,speed,stop,locale,roomCode]);
  return {level,loading,error,mode:config?.available?config.provider:'系统语音',cloud:!!config?.available,stop,replay:()=>{if(!sound || paused)return;unlockSpeechAudio();lastPlayed.current='';setRepeat(n=>n+1);}};
 }

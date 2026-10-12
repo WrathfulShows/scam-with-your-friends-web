@@ -48,6 +48,8 @@ Scam With Your Friends Web 是受原作启发的**非官方开源网页版**：�
 
 </div>
 
+> **扩展更新：** 新工作周加入八类调查流程、情境对话、随机事故、公开大厅、通话转接、队友支援、自定义人物、录制回放及办公室展现。**声音克隆与真人队友语音按钮暂未开放**，默认角色朗读和 Studio 录制仍可用。旧存档保留经典规则；迁移与自托管配置见 [扩展说明](docs/EXPANSION.md)。
+
 ## 灵感来自官方游戏
 
 **官方商店页：** [Steam 上的《Scam With Your Friends》](https://store.steampowered.com/app/4954910/Scam_With_Your_Friends/)

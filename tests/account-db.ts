@@ -6,6 +6,7 @@ export function accountDatabase() {
  sqlite.exec(readFileSync('migrations/0001_initial.sql','utf8')); sqlite.exec(readFileSync('migrations/0002_accounts.sql','utf8'));
  sqlite.exec(readFileSync('migrations/0003_site_settings.sql','utf8'));
  sqlite.exec(readFileSync('migrations/0004_email_verification.sql','utf8'));
+ sqlite.exec(readFileSync('migrations/0005_public_lobbies.sql','utf8'));
  const prepare = (sql: string, values: SQLInputValue[] = []) => ({
   bind: (...args: SQLInputValue[]) => prepare(sql, args),
   first: async () => sqlite.prepare(sql).get(...values) || null,
