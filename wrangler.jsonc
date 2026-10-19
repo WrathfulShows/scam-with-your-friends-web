@@ -16,7 +16,7 @@
     {
       "binding": "DB",
       "database_name": "scam-with-your-friends-web-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "bea3a6c6-1343-4573-b8b8-4334ed788246",
       "migrations_dir": "migrations"
     }
   ],
