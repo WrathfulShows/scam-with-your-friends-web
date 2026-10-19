@@ -39,10 +39,11 @@
   "observability": {
     "enabled": true
   },
-  "workers_dev": true,
+    "workers_dev": true,
   "preview_urls": false,
   "vars": {
-  "ACCOUNTS_ENABLED": "false",
-  "AI_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
-  "AI_MODEL": "gemini-3.8-flash"
+    "ACCOUNTS_ENABLED": "false",
+    "AI_BASE_URL": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "AI_MODEL": "gemini-3.8-flash"
+  }
 }
